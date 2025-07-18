@@ -120,9 +120,10 @@ type FormattedRequirement = {
 interface UserStoriesProps{
   goTogerkin:(gerkinData:any[])=>void;
   userstoriesData:Requirement[];
-  fulluserstoriesdataPayload:{user_stories:Requirement}
+  fulluserstoriesdataPayload:{user_stories:Requirement};
+  fullValidatorPayload:()=>void;
 }
-export default function UserStoriesTab({ goTogerkin,userstoriesData,fulluserstoriesdataPayload }:UserStoriesProps) {
+export default function UserStoriesTab({ goTogerkin,userstoriesData,fulluserstoriesdataPayload,fullValidatorPayload }:UserStoriesProps) {
  
   const [confidenceThreshold, setConfidenceThreshold] = useState(0);
   const [roleFilter, setRoleFilter] = useState<string[]>([]);
@@ -162,6 +163,7 @@ setShowMessage(true);
 
   setRequirements(formattedData);
 }, [userstoriesData]);
+const [isRegenerating, setIsRegenerating] = useState(false);
 
 const [requirements, setRequirements] = useState<FormattedRequirement[]>([]);
 const uniqueRoles = Array.from(
@@ -247,6 +249,61 @@ const handlegherkin = async () => {
     setisLoading(false)
   }
 };
+
+const handleRegenerate = async () => {
+  if (!fullValidatorPayload) return;
+  setIsRegenerating(true);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/user_stories", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(fullValidatorPayload),
+    });
+    if (!response.ok) throw new Error("Validation failed");
+
+    const data = await response.json();
+    const regenerateData: Requirement[] = data.user_stories;
+
+    // Transform and set it like in your useEffect
+    const extractRoleFromStory = (story: string): string => {
+      const match = story.match(/As (a|an|the) ([^,]*)/i);
+      return match ? match[2].trim() : "Unknown";
+    };
+
+    const formattedData: FormattedRequirement[] = regenerateData.map((storyObj) => ({
+      id: storyObj.requirement_id,
+      confidence: storyObj.confidence_score,
+      stories: [
+        {
+          role: extractRoleFromStory(storyObj.user_story),
+          story: storyObj.user_story,
+          acceptanceCriteria: storyObj.acceptance_criteria,
+          tshirt_size: storyObj.tshirt_size
+        }
+      ],
+    }));
+
+    // Set new regenerated data to UI
+    setRequirements(formattedData);
+    setShowMessage(true)
+    setTimeout(() => {
+  setShowMessage(false);
+}, 3000);
+    // Optional: reset filters
+    setSelectedIds([]);
+    setSearchText("");
+    setConfidenceThreshold(0);
+    setRoleFilter([]);
+    setExpandAll(false);
+  } catch (err) {
+    console.error("Regenerate error:", err);
+  } finally {
+    setIsRegenerating(false);
+  }
+};
+
   useEffect(() => {
     const newStates: Record<string, boolean> = {};
     requirements.forEach((r) => {
@@ -575,12 +632,40 @@ const handlegherkin = async () => {
 
   {/* Action buttons */}
   <div className="flex gap-1">
-    <Button
-      className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
-      disabled={filteredRequirements.length === 0}
-    >
-      Regenerate Response
-    </Button>
+   <Button
+  className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
+  disabled={filteredRequirements.length === 0 || isRegenerating}
+  onClick={handleRegenerate}
+>
+  {isRegenerating ? (
+    <span className="flex items-center gap-2">
+      <svg
+        className="animate-spin h-4 w-4 text-black dark:text-white"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      Regenerating...
+    </span>
+  ) : (
+    "Regenerate Response"
+  )}
+</Button>
+
+
     <Button
       className="bg-black dark:bg-white text-white dark:text-black"
       disabled={isLoading}

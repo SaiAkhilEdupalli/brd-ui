@@ -51,7 +51,13 @@ const [gerkinRequirements,setgerkinRequirements] = useState<any[]>([]);
 const [testcaseRequirement,settestcaseRequirement]= useState<any[]>([]);
 const [traceabilityRequirements, settraceabilityRequirements] = useState<any[]>([]);
 const [isTraceabilityLoading, setIsTraceabilityLoading] = useState(false);
-
+ const combinedPayload = {
+      classified_requirements: classifiedRequirements,
+      validated_requirements: validatedRequirements,
+      user_stories: userstoriesRequirements,
+      gherkin_scenarios: gerkinRequirements,
+      test_cases: testcaseRequirement,
+    };
   const handleUploadComplete = (data: Requirement[]) => {
     setExtractedData(data);
 
@@ -62,7 +68,9 @@ const [isTraceabilityLoading, setIsTraceabilityLoading] = useState(false);
       setExtractionStatus('failed');
     }
   };
-
+const extractedPayload ={
+  extracted_requirements:extractedData
+}
  const goToClassifier = (fullPayload: any) => {
    setClassifiedPayload(fullPayload); // Save full response
   setClassifiedRequirements(fullPayload.classified_requirements || []);
@@ -102,13 +110,7 @@ const [isTraceabilityLoading, setIsTraceabilityLoading] = useState(false);
       const goToTraceability = async() => {
  try {
    setIsTraceabilityLoading(true);
-    const combinedPayload = {
-      classified_requirements: classifiedRequirements,
-      validated_requirements: validatedRequirements,
-      user_stories: userstoriesRequirements,
-      gherkin_scenarios: gerkinRequirements,
-      test_cases: testcaseRequirement,
-    };
+   
 
     const response = await fetch("http://localhost:8000/traceability", {
       method: "POST",
@@ -219,18 +221,19 @@ const isStepEnabled = (index: number) => {
   classifiedData={classifiedRequirements}
   fullClassifiedPayload={classifiedPayload}
   goTovalidator={goToValidator}
+  fullExtractedPayload={extractedPayload} 
 />
 
 </TabsContent>
 
 
-        <TabsContent value="validator"><ValidatorTab validatedData={validatedRequirements} fullValidatedDataPayload={validatePayload} goTouserstories={goTouserstories}/></TabsContent>
-        <TabsContent value="user stories"><UserStoriesTab goTogerkin={goTogerkin} userstoriesData={userstoriesRequirements} fulluserstoriesdataPayload={userstoriesPayload} /></TabsContent>
+        <TabsContent value="validator"><ValidatorTab validatedData={validatedRequirements} fullValidatedDataPayload={validatePayload} goTouserstories={goTouserstories} fullClassifierPayload={classifiedPayload}/></TabsContent>
+        <TabsContent value="user stories"><UserStoriesTab goTogerkin={goTogerkin} userstoriesData={userstoriesRequirements} fulluserstoriesdataPayload={userstoriesPayload} fullValidatorPayload={validatePayload} /></TabsContent>
         <TabsContent value="gherkin"><GherkinTab goTotestcases={goTotestcases}  gerkinData={gerkinRequirements} fullgerkinDataPayload={userstoriesPayload}/></TabsContent>
         <TabsContent value="test cases">
-          <TestCasesTab goToTraceability={goToTraceability} testcaseData={testcaseRequirement} fulltestcaseDataPayload={testcasePayload}  isLoading={isTraceabilityLoading}     
+          <TestCasesTab goToTraceability={goToTraceability} testcaseData={testcaseRequirement} fulltestcaseDataPayload={testcasePayload}  isLoading={isTraceabilityLoading}   fulluserstoriesPayload={userstoriesPayload}  
           /></TabsContent>
-        <TabsContent value="traceability"><TraceabilityTab goToLogs={goToLog} traceabilityData={traceabilityRequirements} /></TabsContent>
+        <TabsContent value="traceability"><TraceabilityTab goToLogs={goToLog} traceabilityData={traceabilityRequirements} combinedPayload={combinedPayload}/></TabsContent>
         <TabsContent value="logs"><LogsTab /></TabsContent>
       </Tabs>
     </div>

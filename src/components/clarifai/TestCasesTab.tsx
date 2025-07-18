@@ -44,8 +44,9 @@ goToTraceability: () => void;
   testcaseData: Requirement[]; // ✅ new prop
   fulltestcaseDataPayload:{test_cases:()=>void};
   isLoading:boolean
+  fulluserstoriesPayload:()=>void
 } 
-export default function TestCasesTab({ goToTraceability,testcaseData,fulltestcaseDataPayload,isLoading }:TestCasesTabProps) {
+export default function TestCasesTab({ goToTraceability,testcaseData,fulltestcaseDataPayload,isLoading ,fulluserstoriesPayload}:TestCasesTabProps) {
   const [requirements, setRequirements] = useState(testcaseData);
 
   const [categoryFilter, setPriorityFilter] = useState<string[]>([]);
@@ -136,7 +137,31 @@ const steps = requirements.find(r => r.test_id === openReqId)?.steps ?? [];
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
-
+  const [isRegenerating,setIsRegenerating]= useState(false);
+const handleRegenerate = async () => {
+  if(!fulluserstoriesPayload) return;
+  setIsRegenerating(true);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/test_cases",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      },
+      body: JSON.stringify(fulluserstoriesPayload),
+    });
+    if(!response.ok) throw new Error("Validation failed");
+    const Data = await response.json();
+    
+  }catch (err){
+    console.error("Validation error:", err);
+  }{
+    setIsRegenerating(false);
+    setShowSuccess(true);
+      const timer = setTimeout(() => {
+    setShowSuccess(false);
+  }, 5000);
+  }
+};
   return (
     <>
     <div className="p-2 gap-2 bg-[#f6f6f6] dark:bg-[#181818] text-black dark:text-white rounded-lg">
@@ -510,11 +535,37 @@ const steps = requirements.find(r => r.test_id === openReqId)?.steps ?? [];
 
   <div className="flex gap-2">
     <Button
-      className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-500"
-      disabled={filteredRequirements.length === 0}
-    >
-      Regenerate Response
-    </Button>
+  className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
+  disabled={filteredRequirements.length === 0 || isRegenerating}
+  onClick={handleRegenerate}
+>
+  {isRegenerating ? (
+    <span className="flex items-center gap-2">
+      <svg
+        className="animate-spin h-4 w-4 text-black dark:text-white"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      Regenerating...
+    </span>
+  ) : (
+    "Regenerate Response"
+  )}
+</Button>
     <Button
       className="bg-black text-white dark:bg-[#E5E5E5] dark:text-black"
       disabled={filteredRequirements.length === 0 || isLoading }

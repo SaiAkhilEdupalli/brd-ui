@@ -38,9 +38,10 @@ interface Requirement {
 interface ValidatorTabProps {
 goTouserstories: (userstoriesData:any[]) => void;
   validatedData: Requirement[]; // ✅ new prop
-  fullValidatedDataPayload:{validated_requirements:Requirement}
+  fullValidatedDataPayload:{validated_requirements:Requirement};
+  fullClassifierPayload:()=>void
 } 
-export default function ValidatatorTab({ goTouserstories, validatedData,fullValidatedDataPayload }: ValidatorTabProps) {
+export default function ValidatatorTab({ goTouserstories, validatedData,fullValidatedDataPayload ,fullClassifierPayload}: ValidatorTabProps) {
 const flattenRequirements = () => {
   const items = validatedData;
   const result = [];
@@ -117,7 +118,7 @@ const flattenRequirements = () => {
       req.id.toLowerCase().includes(searchText.toLowerCase());
     return meetsConfidence && meetsStatus && meetsId && meetsSearch;
   });
-
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const totalPages = Math.ceil(filteredRequirements.length / rowsPerPage);
@@ -153,6 +154,31 @@ const handleuserstories = async () => {
     console.error("Validation error:", err);
   }{
     setisLoading(false)
+  }
+};
+const handleRegenerate = async () => {
+  if(!fullClassifierPayload) return;
+  setIsRegenerating(true);
+  
+  try {
+    const response = await fetch("http://127.0.0.1:8000/validate",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      },
+      body: JSON.stringify(fullClassifierPayload),
+    });
+    if(!response.ok) throw new Error("Validation failed");
+    const Data = await response.json();
+    const regenratedData = Data.validated_requirements
+  }catch (err){
+    console.error("Validation error:", err);
+  }finally{
+    setIsRegenerating(false)
+    setSuccessMessage("Generated validate data");
+    const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
   }
 };
   const validateRequirements = (id: string) => {
@@ -494,12 +520,38 @@ const handleuserstories = async () => {
   </span>
 
   <div className="flex gap-1">
-    <Button
-      className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
-      disabled={filteredRequirements.length === 0}
-    >
-      Regenerate Response
-    </Button>
+     <Button
+  className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
+  disabled={filteredRequirements.length === 0 || isRegenerating}
+  onClick={handleRegenerate}
+>
+  {isRegenerating ? (
+    <span className="flex items-center gap-2">
+      <svg
+        className="animate-spin h-4 w-4 text-black dark:text-white"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      Regenerating...
+    </span>
+  ) : (
+    "Regenerate Response"
+  )}
+</Button>
     <Button
       className="bg-black dark:bg-white text-white dark:text-black"
       disabled={isLoading}

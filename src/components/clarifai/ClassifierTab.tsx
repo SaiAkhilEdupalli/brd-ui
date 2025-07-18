@@ -42,13 +42,17 @@ interface Requirement {
 interface ClassifierTabProps {
   goTovalidator: (validatedData: any[]) => void;
   classifiedData: Requirement[]; // trimmed for display
-  fullClassifiedPayload: { classified_requirements: Requirement[] }; // 🔁 full object for validation
+  fullClassifiedPayload: { classified_requirements: Requirement[] };
+  fullExtractedPayload:{
+    extracted_requirements:any[]
+  }; // 🔁 full object for validation
 }
 
 export default function ClassifierTab({
   goTovalidator,
   classifiedData,
   fullClassifiedPayload,
+  fullExtractedPayload
 }: ClassifierTabProps){
 const flattenRequirements = () => {
   const items = classifiedData;
@@ -178,6 +182,34 @@ const handleValidation = async () => {
     console.error("Validation error:", err);
   } finally{
     setisLoading(false);
+  }
+};
+const [isRegenerating,setIsRegenerating] = useState(false);
+const handleRegenerate = async () => {
+  if(!fullExtractedPayload) return;
+  setIsRegenerating(true);
+  //console.log(fullExtractedPayload)
+  try {
+    const response = await fetch("http://127.0.0.1:8000/classify",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      },
+      body: JSON.stringify(fullExtractedPayload),
+    });
+    if(!response.ok) throw new Error("Validation failed");
+    const Data = await response.json();
+  
+  }catch (err){
+    console.error("Validation error:", err);
+  }{
+    setIsRegenerating(false)
+    setShowSuccessMessage(true);
+
+  // Hide it after 5 seconds
+  const timer = setTimeout(() => {
+    setShowSuccessMessage(false);
+  }, 5000);
   }
 };
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -610,12 +642,38 @@ const handleValidation = async () => {
 
   {/* Buttons */}
   <div className="flex gap-1">
-    <Button
-      className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
-      disabled={filteredRequirements.length === 0}
-    >
-      Regenerate Response
-    </Button>
+     <Button
+  className="bg-white dark:bg-[#0D0D0D] text-black dark:text-white border border-gray-400"
+  disabled={filteredRequirements.length === 0 || isRegenerating}
+  onClick={handleRegenerate}
+>
+  {isRegenerating ? (
+    <span className="flex items-center gap-2">
+      <svg
+        className="animate-spin h-4 w-4 text-black dark:text-white"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      Regenerating...
+    </span>
+  ) : (
+    "Regenerate Response"
+  )}
+</Button>
     <Button
       className="bg-black dark:bg-white text-white dark:text-black"
       disabled={isLoading}
