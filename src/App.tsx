@@ -13,9 +13,9 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LandingPage/>} />
-          <Route path="/Login" element={<LoginPage />} />
-          {/* <Route path="/Landing" element={<LandingPage/>}/> */}
+          {/* <Route path="/" element={<LandingPage/>} /> */}
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/Landing" element={<LandingPage/>}/>
           {/* <Route path="/product/code-sensei" element={<Sensei />} /> */}
            <Route path="/:tool" element={<Page />} />
 

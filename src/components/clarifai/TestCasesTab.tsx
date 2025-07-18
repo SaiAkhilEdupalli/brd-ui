@@ -355,10 +355,10 @@ const steps = requirements.find(r => r.test_id === openReqId)?.steps ?? [];
             <Badge
               className={`text-xs px-2 py-1 rounded-md ${
                 req.priority === 'High'
-                  ? 'bg-red-700 text-white'
+                  ? 'bg-[#6C4343] text-white'
                   : req.priority === 'Medium'
-                  ? 'bg-yellow-700 text-white'
-                  : 'bg-blue-700 text-white'
+                  ? 'bg-[#695A3A] text-white'
+                  : 'bg-[#387189] text-white'
               }`}
             >
               {req.priority}

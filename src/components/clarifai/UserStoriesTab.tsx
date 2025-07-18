@@ -553,7 +553,7 @@ const handlegherkin = async () => {
       
             <div className="flex justify-between gap-2 mt-2">
   {/* Message container always takes space */}
-  <div className="min-w-[300px] h-[20px] flex items-center">
+  <div className="min-w-[300px] h-[30px] flex items-center">
     {showMessage && (
       <span className="flex flex-row gap-2">
         <svg
